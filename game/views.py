@@ -10,39 +10,6 @@ from game.serializers import GameSerializer
 
 logger = logging.getLogger("game")
 
-# Create Serializers (for both incoming and outgoing data)
-# incoming - serializer.valid()
-# outgoing - serialized_tasks = TaskSerializer(tasks, many=True).data
-# Create helper function that collates and serializers the game data
-# Both Publish and Play need to recieve this formatted data because Play will be built to recieve it when getting updates during play - which is neccessary
-# Then update Play.tsx to use the new data
-# Then test it
-# Then update Join.tsx to also post and then route to Play.tsx
-# And then review, consolidate, and test it thoroughly before moving on
-# The next phase after this is Players
-# And then push and pull baby
-# And then profile page
-# And then feedback page
-
-# HELPER_FUNCTION(game_id)
-# game = (
-#     Game.objects.filter(id=game_id)
-#     .prefetch_related("tasks")
-#     .order_by('grid_row', 'grid_column')
-#     .first()
-# )
-# max_row = game.tasks.aggregate(Max('grid_row'))['grid_row__max']
-# max_col = game.tasks.aggregate(Max('grid_column'))['grid_column__max']
-
-# grid = [[None] * (max_col + 1) for _ in range(max_row + 1)]
-# tasks = Task.objects.filter(game=game)
-# serialized_tasks = TaskSerializer(tasks, many=True).data
-
-# for task in serialized_tasks:
-#     grid[task['grid_row']][task['grid_column']] = task
-
-# return grid
-
 
 class CreateAndRetrieveGame(APIView):
     serializer_class = GameSerializer
