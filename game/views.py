@@ -15,6 +15,7 @@ class CreateAndRetrieveGame(APIView):
     serializer_class = GameSerializer
 
     def post(self, request):
+        print("request hitting")
         try:
             game = request.data.get("game")
             title = game.get("title")

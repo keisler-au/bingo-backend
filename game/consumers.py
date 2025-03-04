@@ -1,7 +1,11 @@
-from channels.generic.websocket import AsyncWebsocketConsumer
 import json
-from .models import Task
+from datetime import datetime
 from channels.db import database_sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
+from django.forms.models import model_to_dict
+from game.models import Task
+
+
 
 class TaskUpdatesConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -28,57 +32,31 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
         )
 
     async def receive(self, text_data):
-        # Receive data from WebSocket
+        print("This was recieved")
         data = json.loads(text_data)
         task_id = data.get("task_id", None)
-        action = data.get("action", None)
-        title = data.get("title", "")
-        description = data.get("description", "")
         completed = data.get("completed", False)
+        completed_by = data.get("completed_by", None)
+        last_updated = data.get("last_updated", datetime.now())
 
-        if action == "create":
-            # Create a new task and save it to the database
-            task = await self.create_task(title, description, completed)
-            message = f"Task '{task.title}' created."
+        task = await self.update_task(task_id, completed, completed_by, last_updated)
 
-        elif action == "update" and task_id:
-            # Update an existing task in the database
-            task = await self.update_task(task_id, title, description, completed)
-            message = f"Task '{task.title}' updated."
-
-        # Send the task update to all connected clients in the group
         await self.channel_layer.group_send(
             self.group_name,
             {
-                "type": "task_update",  # This is a custom message type
-                "message": message,
-                "task": {
-                    "id": task.id,
-                    "title": task.title,
-                    "description": task.description,
-                    "completed": task.completed
-                }
+                "type": "task_update",
+                "task": model_to_dict(task)
             }
         )
 
     async def task_update(self, event):
-        # Send task update to the WebSocket client
-        await self.send(text_data=json.dumps({
-            "message": event["message"],
-            "task": event["task"]
-        }))
-
-    # Database interactions must be done in sync
-    @database_sync_to_async
-    def create_task(self, title, description, completed):
-        task = Task.objects.create(title=title, description=description, completed=completed)
-        return task
+        await self.send(text_data=json.dumps({"task": event["task"]}))
 
     @database_sync_to_async
-    def update_task(self, task_id, title, description, completed):
+    def update_task(self, task_id, completed, completed_by, last_updated):
         task = Task.objects.get(id=task_id)
-        task.title = title
-        task.description = description
         task.completed = completed
+        task.completed = completed_by
+        task.last_updated = last_updated
         task.save()
         return task
