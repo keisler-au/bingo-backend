@@ -9,11 +9,12 @@ logger = logging.getLogger("game")
 class PlayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
-        fields = ["id", "name", "game"]
+        fields = ["id", "name"]
 
 
 class TaskSerializer(serializers.ModelSerializer):
-    completed_by = serializers.StringRelatedField(read_only=True)
+    game_id = serializers.IntegerField(source="game.id", read_only=True)
+    completed_by = PlayerSerializer(read_only=True)
 
     class Meta:
         model = Task
@@ -25,17 +26,17 @@ class TaskSerializer(serializers.ModelSerializer):
             "last_updated",
             "completed",
             "completed_by",
-            "game",
+            "game_id",
         ]
 
 
 class GameSerializer(serializers.ModelSerializer):
-    players = PlayerSerializer(many=True, read_only=True)
+    players = PlayerSerializer(many=True)
     tasks = serializers.SerializerMethodField()
 
     class Meta:
         model = Game
-        fields = ["id", "title", "players", "tasks"]
+        fields = ["id", "code", "title", "players", "tasks"]
 
     def get_tasks(self, obj):
         # Requires prefetching to have occured before serialization

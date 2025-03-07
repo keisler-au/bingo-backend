@@ -30,16 +30,15 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         task_id = data.get("id", None)
         completed = data.get("completed", False)
-        player_id = json.loads(data.get("completed_by", "{}")).get("id")
+        player_id = data.get("completed_by", "{}").get("id")
         last_updated = data.get("last_updated", datetime.now())
-
         task = await self.update_task(task_id, completed, player_id, last_updated)
-
+        print("WHAT ABOUT THIS = ", task)
         await self.channel_layer.group_send(
             self.group_name,
             {
                 "type": "task_update",
-                "task": model_to_dict(task)
+                "task": task
             }
         )
 
@@ -54,4 +53,6 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
         task.completed_by = player
         task.last_updated = last_updated
         task.save()
-        return task
+        task_dict = model_to_dict(task)
+        task_dict["completed_by"] = model_to_dict(player)
+        return task_dict
