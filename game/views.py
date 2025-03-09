@@ -79,18 +79,21 @@ class RetrieveGame(APIView):
     serializer_class = GameSerializer
 
     def post(self, request):
+        response = Response(
+            {"status": "error", "message": "Game not found or game has no players"}, status=404 )
         try:
             data = request.data.get("data")
             game_code = data.get("code")
             player_id = data.get("player").get('id')
             game = Game.objects.filter(code=game_code).prefetch_related("tasks", "players").first()
-            player = Player.objects.get(id=player_id)
-            game.players.add(player)
-            serializer = self.serializer_class(game)
+            if game:
+                player = Player.objects.get(id=player_id)
+                game.players.add(player)
+                serializer = self.serializer_class(game)
 
-            response = Response(
-                {"status": "success", "game": serializer.data}, status=200
-            )
+                response = Response(
+                    {"status": "success", "game": serializer.data}, status=200
+                )
         except Exception as e:
             logger.error("Unexpected Error: ", str(e))
             response = Response(

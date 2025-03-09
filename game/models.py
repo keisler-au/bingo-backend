@@ -20,6 +20,7 @@ class Game(models.Model):
         while True:
             try:
                 code = get_random_string(6, allowed_chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+                # TODO: TESTING
                 return cls.objects.create(title=title, code=code)
             except IntegrityError:
                 continue

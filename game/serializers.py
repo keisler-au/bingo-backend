@@ -40,11 +40,11 @@ class GameSerializer(serializers.ModelSerializer):
 
     def get_tasks(self, obj):
         # Requires prefetching to have occured before serialization
+        # TODO: TESTING
         tasks = obj.tasks.all()
         grouped_tasks = defaultdict(list)
         for task in tasks:
             grouped_tasks[task.grid_row].append(task)
-
         return [
             TaskSerializer(grouped_tasks[row], many=True).data
             for row in sorted(grouped_tasks.keys())
