@@ -16,7 +16,9 @@ class CreatePlayer(APIView):
 
     def post(self, request):
         try:
+            # TODO: TESTING
             player_name = request.data.get("data")
+            # TODO: TESTING
             player = Player.objects.create(name=player_name)
             serializer = self.serializer_class(player)
             response = Response(
@@ -36,12 +38,14 @@ class CreateAndRetrieveGame(APIView):
 
     def post(self, request):
         try:
+            # TODO: TESTING
             game = request.data.get("data")
             player_id = game.get("player_id")
             title = game.get("title")
             game_values = game.get("values")
             # Create game
             tasks_to_create = []
+            # TODO: TESTING
             with transaction.atomic():
                 created_game = Game.create_with_unique_code(title)
                 player = Player.objects.get(id=player_id)
@@ -57,6 +61,7 @@ class CreateAndRetrieveGame(APIView):
                         tasks_to_create.append(task)
                 Task.objects.bulk_create(tasks_to_create)
             # Retrieve game
+            # TODO: Testing
             game = (
                 Game.objects.filter(id=created_game.id)
                     .prefetch_related("tasks", "players")
@@ -80,17 +85,21 @@ class RetrieveGame(APIView):
 
     def post(self, request):
         response = Response(
-            {"status": "error", "message": "Game not found or game has no players"}, status=404 )
+                {"status": "error", "message": "Game not found or game has no players"}, status=404 
+            )
         try:
+            # TODO: TESTING
             data = request.data.get("data")
             game_code = data.get("code")
             player_id = data.get("player").get('id')
+            # TODO: TESTING
             game = Game.objects.filter(code=game_code).prefetch_related("tasks", "players").first()
             if game:
+                # TODO: TESTING
                 player = Player.objects.get(id=player_id)
+                # TODO: TESTING
                 game.players.add(player)
                 serializer = self.serializer_class(game)
-
                 response = Response(
                     {"status": "success", "game": serializer.data}, status=200
                 )
