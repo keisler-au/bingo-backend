@@ -57,6 +57,7 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
             task.last_updated = last_updated
             # TODO: TESTING
             task.save()
+        # TODO: TESTING
         if task.completed and last_updated < task.last_updated:
             player = Player.objects.get(id=player_id)
             task.completed_by = player
