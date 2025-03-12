@@ -1,23 +1,4 @@
 import json
-from datetime import datetime
-
-from channels.db import database_sync_to_async
-from channels.generic.websocket import AsyncWebsocketConsumer
-from django.forms.models import model_to_dict
-
-from game.models import Player, Task
-
-
-class TaskUpdatesConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
-        self.group_name = "task_updates"
-        await self.channel_layer.group_add(self.group_name, self.channel_name)
-        await self.accept()
-        # TODO: TESTING
-        await self.send(text_data=json.dumps({"message": "WebSocket connected!"}))
-
-
-import json
 import logging
 from datetime import datetime
 
@@ -34,6 +15,8 @@ logger = logging.getLogger("game")
 class TaskUpdatesConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.group_name = "task_updates"
+        self.game_id = self.scope["url_route"]["kwargs"]["game_id"]
+        self.group_name = f"game_{self.game_id}_updates"
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
         # TODO: TESTING
