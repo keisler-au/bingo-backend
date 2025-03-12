@@ -2,6 +2,10 @@ from django.db import models
 from django.utils.crypto import get_random_string
 from django.db import models, IntegrityError
 
+import logging 
+
+logger = logging.getLogger("game")
+
 
 class Player(models.Model):
     name = models.CharField(max_length=255)
@@ -17,12 +21,17 @@ class Game(models.Model):
     @classmethod
     def create_with_unique_code(cls, title):
         """Attempts to create a Game with a unique code, retrying on collision."""
-        while True:
+        retry = 100
+        while retry:
             try:
                 code = get_random_string(6, allowed_chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
                 # TODO: TESTING
+                # 1. Unit test = Game.objects.create(title=title, code="ABC123") -> already in db
+                # 2. Keep retrying, otherwise kill it at 100 and log error
                 return cls.objects.create(title=title, code=code)
             except IntegrityError:
+                retry -= 1
+                if not retry: logger.error(f"Failed to generate a unique code after {100} retries")
                 continue
 
 class Task(models.Model):

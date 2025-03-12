@@ -27,8 +27,8 @@ SECRET_KEY = "django-insecure-m+u0fdw1etk(!5&=rpj4#2qv1k=86hr1c6+!1h2$4r@ku9j$k(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-DYNAMIC_SERVER = "c153"
-ALLOWED_HOSTS = [f"{DYNAMIC_SERVER}-80-201-246-194.ngrok-free.app", "192.168.57.136"]
+DYNAMIC_SERVER = "d54d"
+ALLOWED_HOSTS = [f"{DYNAMIC_SERVER}-84-241-201-129.ngrok-free.app", "192.168.57.136"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -157,17 +157,17 @@ LOGGING = {
     "loggers": {
         "django": {
             "handlers": ["console"],
-            "level": "INFO",
+            "level": "WARNING",
             "propagate": True,
         },
         "django.request": {
             "handlers": ["console"],
-            "level": "ERROR",
+            "level": "WARNING",
             "propagate": False,
         },
         "game": {
             "handlers": ["console"],
-            "level": "DEBUG",
+            "level": "ERROR",
             "propagate": False,
         },
     },
