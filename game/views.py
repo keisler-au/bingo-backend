@@ -96,7 +96,7 @@ class RetrieveGame(APIView):
         try:
             data = request.data.get("data")
             game_code = data.get("code")
-            player_id = data.get("player").get("id")
+            player_id = data.get("player_id")
             game = (
                 Game.objects.filter(code=game_code)
                 .prefetch_related("tasks", "players")
