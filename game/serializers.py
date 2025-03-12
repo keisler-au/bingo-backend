@@ -1,10 +1,12 @@
-from rest_framework import serializers
-from game.models import Game, Player, Task
+import logging
 from collections import defaultdict
 
-import logging 
+from rest_framework import serializers
+
+from game.models import Game, Player, Task
 
 logger = logging.getLogger("game")
+
 
 class PlayerSerializer(serializers.ModelSerializer):
     class Meta:

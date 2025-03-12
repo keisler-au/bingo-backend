@@ -1,11 +1,12 @@
 import json
 import logging
+
 from django.db import transaction
-from rest_framework.views import APIView
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from game.models import Game, Task, Player
+from game.models import Game, Player, Task
 from game.serializers import GameSerializer, PlayerSerializer
 
 logger = logging.getLogger("game")
@@ -65,8 +66,8 @@ class CreateAndRetrieveGame(APIView):
 
             game = (
                 Game.objects.filter(id=created_game.id)
-                    .prefetch_related("tasks", "players")
-                    .first()
+                .prefetch_related("tasks", "players")
+                .first()
             )
             serializer = self.serializer_class(game)
             response = Response(
@@ -86,16 +87,21 @@ class RetrieveGame(APIView):
 
     def post(self, request):
         response = Response(
-                {"status": "error", "message": "Game not found or game has no players"}, status=404 
-            )
+            {"status": "error", "message": "Game not found or game has no players"},
+            status=404,
+        )
         # TODO: TESTING
         # 1. Unit test
         # 2. Won't be able to enter the game
         try:
             data = request.data.get("data")
             game_code = data.get("code")
-            player_id = data.get("player").get('id')
-            game = Game.objects.filter(code=game_code).prefetch_related("tasks", "players").first()
+            player_id = data.get("player").get("id")
+            game = (
+                Game.objects.filter(code=game_code)
+                .prefetch_related("tasks", "players")
+                .first()
+            )
             if game:
                 player = Player.objects.get(id=player_id)
                 game.players.add(player)

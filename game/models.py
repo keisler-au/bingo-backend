@@ -1,17 +1,17 @@
-from django.db import models
-from django.utils.crypto import get_random_string
-from django.db import models, IntegrityError
+import logging
 
-import logging 
+from django.db import IntegrityError, models
+from django.utils.crypto import get_random_string
 
 logger = logging.getLogger("game")
 
 
 class Player(models.Model):
     name = models.CharField(max_length=255)
-    
+
     def __str__(self):
         return self.name
+
 
 class Game(models.Model):
     code = models.CharField(max_length=6, unique=True, editable=False, default=None)
@@ -24,15 +24,21 @@ class Game(models.Model):
         retry = 100
         while retry:
             try:
-                code = get_random_string(6, allowed_chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+                code = get_random_string(
+                    6, allowed_chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+                )
                 # TODO: TESTING
                 # 1. Unit test = Game.objects.create(title=title, code="ABC123") -> already in db
                 # 2. Keep retrying, otherwise kill it at 100 and log error
                 return cls.objects.create(title=title, code=code)
             except IntegrityError:
                 retry -= 1
-                if not retry: logger.error(f"Failed to generate a unique code after {100} retries")
+                if not retry:
+                    logger.error(
+                        f"Failed to generate a unique code after {100} retries"
+                    )
                 continue
+
 
 class Task(models.Model):
     value = models.CharField(max_length=255)

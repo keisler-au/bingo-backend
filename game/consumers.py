@@ -1,41 +1,40 @@
 import json
 from datetime import datetime
+
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.forms.models import model_to_dict
-from game.models import Task, Player
 
+from game.models import Player, Task
 
 
 class TaskUpdatesConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.group_name = "task_updates" 
-        await self.channel_layer.group_add(
-            self.group_name,
-            self.channel_name
-        )
+        self.group_name = "task_updates"
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
         # TODO: TESTING
         await self.send(text_data=json.dumps({"message": "WebSocket connected!"}))
+
+
 import json
+import logging
 from datetime import datetime
-from dateutil import parser
+
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
+from dateutil import parser
 from django.forms.models import model_to_dict
-from game.models import Task, Player
 
-import logging 
+from game.models import Player, Task
 
 logger = logging.getLogger("game")
 
+
 class TaskUpdatesConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.group_name = "task_updates" 
-        await self.channel_layer.group_add(
-            self.group_name,
-            self.channel_name
-        )
+        self.group_name = "task_updates"
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
         # TODO: TESTING
         # 1. Unit test
@@ -45,13 +44,10 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         # TODO: TESTING
         # 1. Unit test
-        # 2. Check Redis server logs 
+        # 2. Check Redis server logs
         # - Disconnects happen automatically (offline, idle timeouts) and if user was already removed nothing happens on trying re-remove
         # - Otherwise connection issues are a bigger problem and are addressed above
-        await self.channel_layer.group_discard(
-            self.group_name,
-            self.channel_name
-        )
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
     async def receive(self, text_data):
         # TODO: TESTING
@@ -59,7 +55,7 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
         # 2. It will only error during edge cases, most likely server issues - Check Django logs
         if text_data == "heartbeat":
             await self.send(text_data=json.dumps({"message": "thump"}))
-            return 
+            return
         # TODO: TESTING
         # 1. Unit test - negative pathway
         # 2. Will raise a JSONDecodeError - Check Django logs
@@ -76,11 +72,7 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
         # 2. This will raise an error - Check Django or Redis logs
         # - it is possible to implement a retry, but at this stage not necessary
         await self.channel_layer.group_send(
-            self.group_name,
-            {
-                "type": "task_update",
-                "task": task
-            }
+            self.group_name, {"type": "task_update", "task": task}
         )
 
     async def task_update(self, event):
@@ -91,7 +83,7 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
         # TODO: TESTING
         # 1. Unit testing
         # 2. {} gets sent and frontend validation rejects processing it
-        try: 
+        try:
             task = Task.objects.get(id=task_id)
             # TODO: TESTING
             # 1. User Pathway - Live, Unit test
@@ -116,9 +108,9 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
             task_dict = model_to_dict(task)
             task_dict["completed_by"] = model_to_dict(player)
         except Exception as e:
-            logger.exception("Unknown exception during Task database update", exc_info=e)
+            logger.exception(
+                "Unknown exception during Task database update", exc_info=e
+            )
             task_dict = {}
 
         return task_dict
-        
-    
