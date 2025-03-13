@@ -14,6 +14,7 @@ logger = logging.getLogger("game")
 
 class TaskUpdatesConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        print("CONNECT TO CONSUMER0--------------")
         self.group_name = "task_updates"
         self.game_id = self.scope["url_route"]["kwargs"]["game_id"]
         self.group_name = f"game_{self.game_id}_updates"
@@ -25,6 +26,7 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({"message": "WebSocket connected!"}))
 
     async def disconnect(self, close_code):
+        print("DISCONNECTING CONSUMER")
         # TODO: TESTING
         # 1. Unit test
         # 2. Check Redis server logs
