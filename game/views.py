@@ -97,6 +97,8 @@ class RetrieveGame(APIView):
         # 1. Unit test
         # 2. Won't be able to enter the game
         try:
+            logger.info("Hosting Test One: ", request.data)
+            logger.error("Hosting Test One: ", request.data)
             data = request.data.get("data")
             game_code = data.get("code")
             player_id = data.get("player_id")
