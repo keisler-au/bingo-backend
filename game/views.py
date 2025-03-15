@@ -1,6 +1,7 @@
 import json
 import logging
 
+import sentry_sdk
 from django.db import transaction
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
@@ -28,6 +29,7 @@ class CreatePlayer(APIView):
             )
         except Exception as e:
             logger.exception("Unexpected error creating player:", exc_info=e)
+            sentry_sdk.capture_exception(e)
             response = Response(
                 {"status": "error", "message": "Unexpected Error"}, status=500
             )
@@ -75,6 +77,7 @@ class CreateAndRetrieveGame(APIView):
             )
         except Exception as e:
             logger.exception("Unexpected Error: ", exc_info=e)
+            sentry_sdk.capture_exception(e)
             response = Response(
                 {"status": "error", "message": "Unexpected Error"}, status=500
             )
@@ -111,6 +114,7 @@ class RetrieveGame(APIView):
                 )
         except Exception as e:
             logger.exception("Unexpected Error: ", exc_info=e)
+            sentry_sdk.capture_exception(e)
             response = Response(
                 {"status": "error", "message": "Unexpected Error"}, status=500
             )
