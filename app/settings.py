@@ -23,11 +23,10 @@ load_dotenv(dotenv_path)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-m+u0fdw1etk(!5&=rpj4#2qv1k=86hr1c6+!1h2$4r@ku9j$k("
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     "727b-89-205-130-170.ngrok-free.app",
