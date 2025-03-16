@@ -12,6 +12,7 @@ from game.serializers import GameSerializer, PlayerSerializer
 
 logger = logging.getLogger("game")
 
+# TODO: Add num queries as shown in test_serialzers to my test cases to make sure
 
 class CreatePlayer(APIView):
     serializer_class = PlayerSerializer
@@ -69,6 +70,7 @@ class CreateAndRetrieveGame(APIView):
             game = (
                 Game.objects.filter(id=created_game.id)
                 .prefetch_related("tasks", "players")
+                .order_by("tasks__grid_column")
                 .first()
             )
             serializer = self.serializer_class(game)
@@ -97,15 +99,13 @@ class RetrieveGame(APIView):
         # 1. Unit test
         # 2. Won't be able to enter the game
         try:
-            logger.error("Hosting Test One A: ")
-            logger.error(request.data)
-            logger.error("Hosting Test One B: ")
             data = request.data.get("data")
             game_code = data.get("code")
             player_id = data.get("player_id")
             game = (
                 Game.objects.filter(code=game_code)
                 .prefetch_related("tasks", "players")
+                .order_by("tasks__grid_column")
                 .first()
             )
             if game:

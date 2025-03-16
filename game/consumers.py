@@ -17,7 +17,8 @@ logger = logging.getLogger("game")
 r = redis.StrictRedis(
     host=os.getenv("REDIS_HOST"),
     port=os.getenv("REDIS_PORT"),
-    db=0,
+    password=os.getenv("REDIS_PASSWORD"),
+    ssl=True,
     decode_responses=True,
 )
 
@@ -27,13 +28,14 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
     # TODO: TESTING
     # 2. User is shown modal and Log is sent to Sentry
     async def connect(self):
+
         self.game_id = self.scope["url_route"]["kwargs"]["game_id"]
         self.player_id = self.scope["url_route"]["kwargs"]["player_id"]
         self.group_name = f"game_{self.game_id}"
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
-        await self.send_queued_messages()
+        # await self.send_queued_messages()
 
     async def disconnect(self, close_code):
         # TODO: TESTING
@@ -42,8 +44,8 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
         # - Disconnects happen automatically (offline, idle timeouts) and if user was already removed nothing happens on trying re-remove. User channel is also removed for disconnected users with this AsyncWebsocketConsumer class
         # - Otherwise connection issues are a bigger problem and are addressed above
 
-        r.rpush(f"{self.group_name}_queue", self.player_id)
-        r.expire(f"{self.group_name}_queue", 86400)
+        # r.rpush(f"{self.group_name}_queue", self.player_id)
+        # r.expire(f"{self.group_name}_queue", 86400)
 
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
@@ -66,7 +68,7 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
         last_updated = data.get("last_updated")
         task = await self.update_task(task_id, player_id, last_updated)
         if task:
-            self.enqueue_message(task)
+            # self.enqueue_message(task)
             # TODO: TESTING
             # 1. Unit test
             # 2. This will raise an error - Check Django or Redis logs
@@ -125,6 +127,7 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
                 if not task.completed:
                     task.completed = True
                 task.save()
+                # TODO: I could maybe use a serializer here
                 task_dict = model_to_dict(task)
                 task_dict["completed_by"] = model_to_dict(player)
         except Exception as e:

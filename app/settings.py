@@ -29,7 +29,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = False
 
 ALLOWED_HOSTS = [
-    "727b-89-205-130-170.ngrok-free.app",
+    "63b5-31-201-252-96.ngrok-free.app",
     "192.168.57.136",
     "bingo-j8k6.onrender.com",
 ]

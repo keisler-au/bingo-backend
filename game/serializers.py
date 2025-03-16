@@ -46,7 +46,7 @@ class GameSerializer(serializers.ModelSerializer):
         # 1. Unit test - example in test.py
         # 2. Test is enough, and then if it's working it's working
 
-        tasks = obj.tasks.all().order_by("grid_column")
+        tasks = obj.tasks.all()
         grouped_tasks = defaultdict(list)
         for task in tasks:
             grouped_tasks[task.grid_row].append(task)
