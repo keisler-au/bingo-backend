@@ -12,15 +12,10 @@ from game.serializers import GameSerializer, PlayerSerializer
 
 logger = logging.getLogger("game")
 
-# TODO: Add num queries as shown in test_serialzers to my test cases to make sure
-
 class CreatePlayer(APIView):
     serializer_class = PlayerSerializer
 
     def post(self, request):
-        # TODO: TESTING
-        # 1. Unit test
-        # 2. If it's not there it will error - Check Django logs
         try:
             player_name = request.data.get("data")
             player = Player.objects.create(name=player_name)
@@ -42,9 +37,6 @@ class CreateAndRetrieveGame(APIView):
     serializer_class = GameSerializer
 
     def post(self, request):
-        # TODO: TESTING
-        # Unit test
-        # Logging - Error gets sent back to frontend and modal already displayed
         try:
             game = request.data.get("data")
             player_id = game.get("player_id")
@@ -95,9 +87,6 @@ class RetrieveGame(APIView):
             {"status": "error", "message": "Game not found or game has no players"},
             status=404,
         )
-        # TODO: TESTING
-        # 1. Unit test
-        # 2. Won't be able to enter the game
         try:
             data = request.data.get("data")
             game_code = data.get("code")

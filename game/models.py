@@ -27,9 +27,6 @@ class Game(models.Model):
                 code = get_random_string(
                     6, allowed_chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
                 )
-                # TODO: TESTING
-                # 1. Unit test = Game.objects.create(title=title, code="ABC123") -> already in db
-                # 2. Keep retrying, otherwise kill it at 100 and log error
                 return cls.objects.create(title=title, code=code)
             except IntegrityError:
                 retry -= 1

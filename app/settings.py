@@ -29,8 +29,9 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = False
 
 ALLOWED_HOSTS = [
-    "63b5-31-201-252-96.ngrok-free.app",
-    "192.168.57.136",
+    "490a-89-205-129-243.ngrok-free.app",
+    "192.168.57.136", # Windows
+    "192.168.108.215", # WSL
     "bingo-j8k6.onrender.com",
 ]
 

@@ -41,11 +41,6 @@ class GameSerializer(serializers.ModelSerializer):
         fields = ["id", "code", "title", "players", "tasks"]
 
     def get_tasks(self, obj):
-        # Requires prefetching to have occured before serialization
-        # TODO: TESTING
-        # 1. Unit test - example in test.py
-        # 2. Test is enough, and then if it's working it's working
-
         tasks = obj.tasks.all()
         grouped_tasks = defaultdict(list)
         for task in tasks:
