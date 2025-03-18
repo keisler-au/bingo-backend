@@ -12,6 +12,7 @@ from game.serializers import GameSerializer, PlayerSerializer
 
 logger = logging.getLogger("game")
 
+
 class CreatePlayer(APIView):
     serializer_class = PlayerSerializer
 

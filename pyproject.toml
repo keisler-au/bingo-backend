@@ -21,6 +21,7 @@ dependencies = [
     "sentry-sdk (>=2.22.0,<3.0.0)",
     "redis (>=5.2.1,<6.0.0)",
     "python-dateutil (>=2.9.0.post0,<3.0.0)",
+    "isort (>=6.0.1,<7.0.0)",
 ]
 
 

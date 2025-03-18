@@ -1,4 +1,5 @@
 from django.urls import path
+
 from game.consumers import TaskUpdatesConsumer
 
 websocket_urlpatterns = [

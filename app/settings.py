@@ -30,8 +30,8 @@ DEBUG = False
 
 ALLOWED_HOSTS = [
     "490a-89-205-129-243.ngrok-free.app",
-    "192.168.57.136", # Windows
-    "192.168.108.215", # WSL
+    "192.168.57.136",  # Windows
+    "192.168.108.215",  # WSL
     "bingo-j8k6.onrender.com",
 ]
 

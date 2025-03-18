@@ -16,7 +16,7 @@ repos:
         name: isort
         language: system
         files: \.py$
-        entry: bash -c "cd backend && poetry run isort ."
+        entry: bash -c "poetry run isort ."
 
   - repo: local
     hooks:
@@ -24,6 +24,6 @@ repos:
         name: black
         language: system
         files: \.py$
-        entry: bash -c "cd backend && poetry run black ."
+        entry: bash -c "poetry run black ."
 
 fail_fast: true

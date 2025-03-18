@@ -1,6 +1,7 @@
 from django.test import TestCase
-from rest_framework.test import APIClient
 from rest_framework import status
+from rest_framework.test import APIClient
+
 from game.models import Game, Player
 from game.serializers import GameSerializer
 
@@ -26,6 +27,7 @@ class CreatePlayerTestCase(TestCase):
         with self.assertRaises(Exception):
             self.client.post(self.url, data)
 
+
 class CreateAndRetrieveGameTest(TestCase):
     def setUp(self):
         self.player = Player.objects.create(id=1, name="Test Player")
@@ -33,7 +35,7 @@ class CreateAndRetrieveGameTest(TestCase):
             "data": {
                 "player_id": self.player.id,
                 "title": "Test Game",
-                "values": [["X", "O", "X"], ["O", "X", "O"], ["X", "X", "X"]]
+                "values": [["X", "O", "X"], ["O", "X", "O"], ["X", "X", "X"]],
             }
         }
         self.url = "/game/publish_game/"
@@ -41,7 +43,11 @@ class CreateAndRetrieveGameTest(TestCase):
     def test_create_and_retrieve_game(self):
         """Game created in db and serialized data sent back to client"""
         with self.assertNumQueries(1):
-            games = Game.objects.prefetch_related("players", 'tasks').order_by("tasks__grid_column").all()
+            games = (
+                Game.objects.prefetch_related("players", "tasks")
+                .order_by("tasks__grid_column")
+                .all()
+            )
             GameSerializer(games, many=True).data
         pass
 
@@ -56,6 +62,7 @@ class CreateAndRetrieveGameTest(TestCase):
     def test_failed_create_and_retrieve_game(self):
         """Game created in db but serialization failed and 500 sent to client"""
         pass
+
 
 class RetrieveGameTestCase(TestCase):
     def setUp(self):
