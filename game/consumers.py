@@ -1,0 +1,118 @@
+import json
+import logging
+import os
+
+import redis.asyncio as redis
+import sentry_sdk
+from channels.db import database_sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.layers import get_channel_layer
+from dateutil import parser
+from django.forms.models import model_to_dict
+
+from game.models import Player, Task
+
+logger = logging.getLogger("game")
+
+r = redis.StrictRedis(
+    host=os.getenv("REDIS_HOST"),
+    port=os.getenv("REDIS_PORT"),
+    password=os.getenv("REDIS_PASSWORD"),
+    ssl=True,
+    decode_responses=True,
+)
+
+
+class TaskUpdatesConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.game_id = self.scope["url_route"]["kwargs"]["game_id"]
+        self.player_id = self.scope["url_route"]["kwargs"]["player_id"]
+        self.group_name = f"game_{self.game_id}"
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+
+        await self.send_queued_messages()
+
+    async def disconnect(self, close_code):
+        try:
+            await r.rpush(f"{self.group_name}_queue", self.player_id)
+            await r.expire(f"{self.group_name}_queue", 86400)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            logger.exception("Failed redis queue update on disconnection", exc_info=e)
+
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+    async def receive(self, text_data):
+        if text_data == "heartbeat":
+            await self.send(text_data=json.dumps({"message": "thump"}))
+            return
+
+        data = json.loads(text_data)
+        task_id = data.get("id")
+        player_id = data.get("completed_by").get("id")
+        last_updated = data.get("last_updated")
+        task = await self.update_task(task_id, player_id, last_updated)
+
+        if task:
+            self.enqueue_message(task)
+            await self.channel_layer.group_send(
+                self.group_name, {"type": "send_task_update", "task": task}
+            )
+
+    async def send_task_update(self, event):
+        await self.send(text_data=json.dumps({"task": event["task"]}))
+
+    async def send_queued_messages(self):
+        """Check if there are any messages in the queue for the user when they reconnect"""
+        try:
+            self.queue_name = f"{self.group_name}_player_{self.player_id}"
+            message = True
+            while message:
+                message = await r.lpop(self.queue_name)
+                if message:
+                    await self.send_task_update({"task": json.loads(message)})
+            await r.lrem(f"{self.group_name}_queue", 1, self.player_id)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            logger.exception(
+                "Failed to send redis queue messages on connection", exc_info=e
+            )
+
+    async def enqueue_message(self, task):
+        """Enqueue message to all offline (disconnected) players"""
+        try:
+            offline_player_ids = await r.lrange(f"{self.group_name}_queue", 0, -1)
+            for id in offline_player_ids:
+                await r.rpush(f"{self.group_name}_player_{id}", json.dumps(task))
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            logger.exception("Failed redis enqueue from recieved message", exc_info=e)
+
+    @database_sync_to_async
+    def update_task(self, task_id, player_id, last_updated):
+        task_dict = {}
+        try:
+            task = Task.objects.get(id=task_id)
+            last_updated = parser.parse(last_updated)
+            if (
+                task.completed
+                and last_updated < task.last_updated
+                or not task.completed
+            ):
+                player = Player.objects.get(id=player_id)
+                task.completed_by = player
+                task.last_updated = last_updated
+                if not task.completed:
+                    task.completed = True
+                task.save()
+                task_dict = model_to_dict(task)
+                task_dict["completed_by"] = model_to_dict(player)
+        except Exception as e:
+            logger.exception(
+                "Unknown exception during Task database update", exc_info=e
+            )
+            sentry_sdk.capture_exception(e)
+            task_dict = None
+
+        return task_dict
