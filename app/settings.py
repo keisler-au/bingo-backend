@@ -28,12 +28,9 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = [
-    "490a-89-205-129-243.ngrok-free.app",
-    "192.168.57.136",  # Windows
-    "192.168.108.215",  # WSL
-    "bingo-j8k6.onrender.com",
-]
+ALLOWED_HOSTS = ["localhost", os.getenv("PROD_HOST"), os.getenv("DEV_HOST")]
+CORS_ALLOW_ALL_ORIGINS = True
+
 
 INSTALLED_APPS = [
     "django.contrib.admin",

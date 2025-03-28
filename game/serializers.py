@@ -41,7 +41,7 @@ class GameSerializer(serializers.ModelSerializer):
         fields = ["id", "code", "title", "players", "tasks"]
 
     def get_tasks(self, obj):
-        tasks = obj.tasks.all()
+        tasks = obj.tasks.all().order_by("grid_column")
         grouped_tasks = defaultdict(list)
         for task in tasks:
             grouped_tasks[task.grid_row].append(task)

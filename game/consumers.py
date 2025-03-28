@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -17,9 +18,9 @@ logger = logging.getLogger("game")
 r = redis.StrictRedis(
     host=os.getenv("REDIS_HOST"),
     port=os.getenv("REDIS_PORT"),
-    password=os.getenv("REDIS_PASSWORD"),
-    ssl=True,
-    decode_responses=True,
+    # password=os.getenv("REDIS_PASSWORD"),
+    # ssl=True,
+    # decode_responses=True,
 )
 
 
@@ -31,16 +32,10 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
-        await self.send_queued_messages()
+        asyncio.create_task(self.send_queued_messages())
 
     async def disconnect(self, close_code):
-        try:
-            await r.rpush(f"{self.group_name}_queue", self.player_id)
-            await r.expire(f"{self.group_name}_queue", 86400)
-        except Exception as e:
-            sentry_sdk.capture_exception(e)
-            logger.exception("Failed redis queue update on disconnection", exc_info=e)
-
+        asyncio.create_task(self.add_player_to_queue())
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
     async def receive(self, text_data):
@@ -55,39 +50,13 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
         task = await self.update_task(task_id, player_id, last_updated)
 
         if task:
-            self.enqueue_message(task)
+            asyncio.create_task(self.enqueue_message(task))
             await self.channel_layer.group_send(
                 self.group_name, {"type": "send_task_update", "task": task}
             )
 
     async def send_task_update(self, event):
         await self.send(text_data=json.dumps({"task": event["task"]}))
-
-    async def send_queued_messages(self):
-        """Check if there are any messages in the queue for the user when they reconnect"""
-        try:
-            self.queue_name = f"{self.group_name}_player_{self.player_id}"
-            message = True
-            while message:
-                message = await r.lpop(self.queue_name)
-                if message:
-                    await self.send_task_update({"task": json.loads(message)})
-            await r.lrem(f"{self.group_name}_queue", 1, self.player_id)
-        except Exception as e:
-            sentry_sdk.capture_exception(e)
-            logger.exception(
-                "Failed to send redis queue messages on connection", exc_info=e
-            )
-
-    async def enqueue_message(self, task):
-        """Enqueue message to all offline (disconnected) players"""
-        try:
-            offline_player_ids = await r.lrange(f"{self.group_name}_queue", 0, -1)
-            for id in offline_player_ids:
-                await r.rpush(f"{self.group_name}_player_{id}", json.dumps(task))
-        except Exception as e:
-            sentry_sdk.capture_exception(e)
-            logger.exception("Failed redis enqueue from recieved message", exc_info=e)
 
     @database_sync_to_async
     def update_task(self, task_id, player_id, last_updated):
@@ -116,3 +85,37 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
             task_dict = None
 
         return task_dict
+
+    async def add_player_to_queue(self):
+        try:
+            await r.rpush(f"{self.group_name}_queue", self.player_id)
+            await r.expire(f"{self.group_name}_queue", 86400)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            logger.exception("Failed redis queue update on disconnection", exc_info=e)
+
+    async def enqueue_message(self, task):
+        """Enqueue message to all offline (disconnected) players"""
+        try:
+            offline_player_ids = await r.lrange(f"{self.group_name}_queue", 0, -1)
+            for id in offline_player_ids:
+                await r.rpush(f"{self.group_name}_player_{id}", json.dumps(task))
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            logger.exception("Failed redis enqueue from recieved message", exc_info=e)
+
+    async def send_queued_messages(self):
+        """Check if there are any messages in the queue for the user when they reconnect"""
+        try:
+            self.queue_name = f"{self.group_name}_player_{self.player_id}"
+            message = True
+            while message:
+                message = await r.lpop(self.queue_name)
+                if message:
+                    await self.send_task_update({"task": json.loads(message)})
+            await r.lrem(f"{self.group_name}_queue", 1, self.player_id)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            logger.exception(
+                "Failed to send redis queue messages on connection", exc_info=e
+            )
