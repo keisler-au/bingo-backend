@@ -29,7 +29,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ["localhost", os.getenv("PROD_HOST"), os.getenv("DEV_HOST")]
+ALLOWED_HOSTS = [os.getenv("PROD_HOST"), os.getenv("DEV_HOST")]
 CORS_ALLOW_ALL_ORIGINS = True
 
 
@@ -83,7 +83,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [(os.getenv("REDIS_HOST"), os.getenv("REDIS_PORT"))],
+            "hosts": [(os.getenv("REDIS_HOST_PROD"), os.getenv("REDIS_PORT"))],
         },
     },
 }
