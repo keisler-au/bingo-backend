@@ -122,6 +122,7 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
             message = True
             while message:
                 message = await r.lpop(player_queue)
+                logger.info(f"Message is: {message}")
                 if message:
                     await self.send_task_update({"task": json.loads(message)})
             logger.info(
