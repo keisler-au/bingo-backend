@@ -16,11 +16,11 @@ from game.models import Player, Task
 logger = logging.getLogger("game")
 
 r = redis.StrictRedis(
-    host=os.getenv("REDIS_HOST"),
+    host=os.getenv("REDIS_HOST_PROD"),
     port=os.getenv("REDIS_PORT"),
-    # password=os.getenv("REDIS_PASSWORD"),
-    # ssl=True,
-    # decode_responses=True,
+    password=os.getenv("REDIS_PASSWORD"),
+    ssl=True,
+    decode_responses=True,
 )
 
 
