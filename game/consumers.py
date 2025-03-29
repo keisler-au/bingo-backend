@@ -90,6 +90,9 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
         try:
             await r.rpush(f"{self.group_name}_queue", self.player_id)
             await r.expire(f"{self.group_name}_queue", 86400)
+            logger.info(
+                f"add_player_to_queue(), Key: {self.group_name}, Queue: {r.lrange(self.group_name, 0, -1)}"
+            )
         except Exception as e:
             sentry_sdk.capture_exception(e)
             logger.exception("Failed redis queue update on disconnection", exc_info=e)
@@ -97,9 +100,13 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
     async def enqueue_message(self, task):
         """Enqueue message to all offline (disconnected) players"""
         try:
-            offline_player_ids = await r.lrange(f"{self.group_name}_queue", 0, -1)
+            queue_name = f"{self.group_name}_queue"
+            offline_player_ids = await r.lrange(queue_name, 0, -1)
             for id in offline_player_ids:
                 await r.rpush(f"{self.group_name}_player_{id}", json.dumps(task))
+            logger.info(
+                f"enqueue_message(), Key: {queue_name}, Queue: {r.lrange(queue_name, 0, -1)}"
+            )
         except Exception as e:
             sentry_sdk.capture_exception(e)
             logger.exception("Failed redis enqueue from recieved message", exc_info=e)
@@ -107,13 +114,24 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
     async def send_queued_messages(self):
         """Check if there are any messages in the queue for the user when they reconnect"""
         try:
-            self.queue_name = f"{self.group_name}_player_{self.player_id}"
+            game_queue = f"{self.group_name}_queue"
+            player_queue = f"{self.group_name}_player_{self.player_id}"
+            logger.info(
+                f"send_queued_message(), Key: {player_queue}, Queue Before Loop: {r.lrange(player_queue, 0, -1)}"
+            )
             message = True
             while message:
-                message = await r.lpop(self.queue_name)
+                message = await r.lpop(player_queue)
                 if message:
                     await self.send_task_update({"task": json.loads(message)})
-            await r.lrem(f"{self.group_name}_queue", 1, self.player_id)
+            logger.info(
+                f"send_queued_message(), Key: {player_queue}, Queue After Loop: {r.lrange(player_queue, 0, -1)}"
+            )
+            await r.lrem(game_queue, 1, self.player_id)
+            logger.info(
+                f"send_queued_message(), Key: {game_queue}, Queue: {r.lrange(game_queue, 0, -1)}"
+            )
+
         except Exception as e:
             sentry_sdk.capture_exception(e)
             logger.exception(

@@ -174,7 +174,7 @@ LOGGING = {
         },
         "game": {
             "handlers": ["console"],
-            "level": "ERROR",
+            "level": "INFO",
             "propagate": False,
         },
     },
