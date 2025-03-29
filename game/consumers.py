@@ -18,6 +18,7 @@ logger = logging.getLogger("game")
 r = redis.StrictRedis(
     host=os.getenv("REDIS_HOST"),
     port=os.getenv("REDIS_PORT"),
+    username=os.getenv("REDIS_USER"),
     password=os.getenv("REDIS_PASSWORD"),
     ssl=True,
     decode_responses=True,
