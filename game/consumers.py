@@ -15,14 +15,8 @@ from game.models import Player, Task
 
 logger = logging.getLogger("game")
 
-r = redis.StrictRedis(
-    host=os.getenv("REDIS_HOST"),
-    port=os.getenv("REDIS_PORT"),
-    username=os.getenv("REDIS_USER"),
-    password=os.getenv("REDIS_PASSWORD"),
-    ssl=True,
-    decode_responses=True,
-)
+
+r = redis.from_url(os.getenv("REDIS_URL"))
 
 
 class TaskUpdatesConsumer(AsyncWebsocketConsumer):
@@ -30,6 +24,7 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
         self.game_id = self.scope["url_route"]["kwargs"]["game_id"]
         self.player_id = self.scope["url_route"]["kwargs"]["player_id"]
         self.group_name = f"game_{self.game_id}"
+
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
@@ -92,7 +87,7 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
             await r.rpush(f"{self.group_name}_queue", self.player_id)
             await r.expire(f"{self.group_name}_queue", 86400)
             logger.info(
-                f"add_player_to_queue(), Key: {self.group_name}, Queue: {r.lrange(self.group_name, 0, -1)}"
+                f"add_player_to_queue(), Key: {self.group_name}, Queue: {await r.lrange(self.group_name, 0, -1)}"
             )
         except Exception as e:
             sentry_sdk.capture_exception(e)
@@ -106,7 +101,7 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
             for id in offline_player_ids:
                 await r.rpush(f"{self.group_name}_player_{id}", json.dumps(task))
             logger.info(
-                f"enqueue_message(), Key: {queue_name}, Queue: {r.lrange(queue_name, 0, -1)}"
+                f"enqueue_message(), Key: {queue_name}, Queue: {await r.lrange(queue_name, 0, -1)}"
             )
         except Exception as e:
             sentry_sdk.capture_exception(e)
@@ -118,20 +113,19 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
             game_queue = f"{self.group_name}_queue"
             player_queue = f"{self.group_name}_player_{self.player_id}"
             logger.info(
-                f"send_queued_message(), Key: {player_queue}, Queue Before Loop: {r.lrange(player_queue, 0, -1)}"
+                f"send_queued_message(), Key: {player_queue}, Queue Before Loop: {await r.lrange(player_queue, 0, -1)}"
             )
             message = True
             while message:
                 message = await r.lpop(player_queue)
-                logger.info(f"Message is: {message}")
                 if message:
                     await self.send_task_update({"task": json.loads(message)})
             logger.info(
-                f"send_queued_message(), Key: {player_queue}, Queue After Loop: {r.lrange(player_queue, 0, -1)}"
+                f"send_queued_message(), Key: {player_queue}, Queue After Loop: {await r.lrange(player_queue, 0, -1)}"
             )
             await r.lrem(game_queue, 1, self.player_id)
             logger.info(
-                f"send_queued_message(), Key: {game_queue}, Queue: {r.lrange(game_queue, 0, -1)}"
+                f"send_queued_message(), Key: {game_queue}, Queue: {await r.lrange(game_queue, 0, -1)}"
             )
 
         except Exception as e:
