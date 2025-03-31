@@ -16,7 +16,7 @@ from game.models import Player, Task
 logger = logging.getLogger("game")
 
 
-r = redis.from_url(os.getenv("REDIS_URL"))
+r = redis.from_url(os.getenv("REDIS_URL"), decode_responses=True)
 
 
 class TaskUpdatesConsumer(AsyncWebsocketConsumer):
