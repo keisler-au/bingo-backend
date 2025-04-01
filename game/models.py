@@ -27,6 +27,8 @@ class Game(models.Model):
                 code = get_random_string(
                     6, allowed_chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
                 )
+                if not title:
+                    title = f"Game{code}"
                 return cls.objects.create(title=title, code=code)
             except IntegrityError:
                 retry -= 1

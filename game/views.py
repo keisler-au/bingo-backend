@@ -18,7 +18,7 @@ class CreatePlayer(APIView):
 
     def post(self, request):
         try:
-            player_name = request.data.get("data")
+            player_name = request.data
             player = Player.objects.create(name=player_name)
             serializer = self.serializer_class(player)
             response = Response(
@@ -39,14 +39,13 @@ class CreateAndRetrieveGame(APIView):
 
     def post(self, request):
         try:
-            game = request.data.get("data")
-            player_id = game.get("player_id")
-            title = game.get("title")
-            game_values = game.get("values")
+            player_id = request.data.get("player_id")
+            game_title = request.data.get("title")
+            game_values = request.data.get("values")
 
             tasks_to_create = []
             with transaction.atomic():
-                created_game = Game.create_with_unique_code(title)
+                created_game = Game.create_with_unique_code(game_title)
                 player = Player.objects.get(id=player_id)
                 created_game.players.add(player)
                 for rowIndex, row in enumerate(game_values):
@@ -89,9 +88,8 @@ class RetrieveGame(APIView):
             status=404,
         )
         try:
-            data = request.data.get("data")
-            game_code = data.get("code")
-            player_id = data.get("player_id")
+            game_code = request.data.get("code")
+            player_id = request.data.get("player_id")
             game = (
                 Game.objects.filter(code=game_code)
                 .prefetch_related("tasks", "players")

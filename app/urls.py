@@ -17,7 +17,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+from feedback.views import SendEmailView
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("game/", include("game.urls")),
+    path("feedback/", SendEmailView.as_view(), name="feedback_email"),
 ]
