@@ -16,7 +16,8 @@ from game.models import Player, Task
 logger = logging.getLogger("game")
 
 
-r = redis.from_url(os.getenv("REDIS_URL"), decode_responses=True)
+r_pool = redis.ConnectionPool.from_url(os.getenv("REDIS_URL"), decode_responses=True)
+r = redis.StrictRedis.from_pool(r_pool)
 
 
 class TaskUpdatesConsumer(AsyncWebsocketConsumer):
@@ -89,7 +90,7 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
             logger.info(
                 f"add_player_to_queue(), Key: {self.group_name}, Queue: {await r.lrange(self.group_name, 0, -1)}"
             )
-        except Exception as e:
+        except redis.exceptions.RedisError as e:
             sentry_sdk.capture_exception(e)
             logger.exception("Failed redis queue update on disconnection", exc_info=e)
 
@@ -103,7 +104,7 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
             logger.info(
                 f"enqueue_message(), Key: {queue_name}, Queue: {await r.lrange(queue_name, 0, -1)}"
             )
-        except Exception as e:
+        except redis.exceptions.RedisError as e:
             sentry_sdk.capture_exception(e)
             logger.exception("Failed redis enqueue from recieved message", exc_info=e)
 
@@ -127,8 +128,7 @@ class TaskUpdatesConsumer(AsyncWebsocketConsumer):
             logger.info(
                 f"send_queued_message(), Key: {game_queue}, Queue: {await r.lrange(game_queue, 0, -1)}"
             )
-
-        except Exception as e:
+        except redis.exceptions.RedisError as e:
             sentry_sdk.capture_exception(e)
             logger.exception(
                 "Failed to send redis queue messages on connection", exc_info=e
